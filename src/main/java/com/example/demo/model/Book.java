@@ -1,29 +1,47 @@
 package com.example.demo.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
-import org.hibernate.annotations.SQLDelete;
-import java.math.BigDecimal;
+import org.hibernate.annotations.SQLRestriction;
 
-@FilterDef(name = "deletedBookFilter", parameters = @ParamDef(name = "isDeleted", type = Boolean.class))
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "books")
-@SQLDelete(sql = "UPDATE books SET is_deleted = TRUE WHERE id=?")
+@FilterDef(name = "deletedBookFilter", parameters = @ParamDef(name = "isDeleted", type = Boolean.class))
 @Filter(name = "deletedBookFilter", condition = "is_deleted = :isDeleted")
+@SQLRestriction(value = "is_deleted = FALSE")
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
     private String author;
+
+    @Column(nullable = false, unique = true)
     private String isbn;
+
+    @Column(nullable = false)
     private BigDecimal price;
+
     private String description;
+
     private String coverImage;
-     private boolean isDeleted = false;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 }

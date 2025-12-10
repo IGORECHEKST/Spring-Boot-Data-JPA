@@ -1,58 +1,51 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.BookDto;
 import com.example.demo.dto.CreateBookRequestDto;
+import com.example.demo.mapper.BookMapper; // <-- Новый импорт
 import com.example.demo.model.Book;
 import com.example.demo.repository.BookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class BookService {
     private final BookRepository bookRepository;
+    private final BookMapper bookMapper;
 
-    public Book save(CreateBookRequestDto bookDto) {
-        Book book = mapDtoToBook(bookDto);
-        return bookRepository.save(book);
+    public BookService(BookRepository bookRepository, BookMapper bookMapper) {
+        this.bookRepository = bookRepository;
+        this.bookMapper = bookMapper;
     }
 
-    public List<Book> findAll() {
-        return bookRepository.findAll();
+    public BookDto save(CreateBookRequestDto bookDto) {
+        Book book = bookMapper.toEntity(bookDto);
+        return bookMapper.toDto(bookRepository.save(book));
     }
 
-    public Book findById(Long id) {
-        return bookRepository.findById(id)
+    public List<BookDto> findAll() {
+        return bookRepository.findAll().stream()
+                .map(bookMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public BookDto findById(Long id) {
+        Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
+        return bookMapper.toDto(book);
     }
 
-    public Book update(Long id, CreateBookRequestDto bookDto) {
+    public BookDto update(Long id, CreateBookRequestDto bookDto) {
         Book existingBook = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found with id: " + id));
-
-        existingBook.setTitle(bookDto.getTitle());
-        existingBook.setAuthor(bookDto.getAuthor());
-        existingBook.setIsbn(bookDto.getIsbn());
-        existingBook.setPrice(bookDto.getPrice());
-        existingBook.setDescription(bookDto.getDescription());
-        existingBook.setCoverImage(bookDto.getCoverImage());
-
-        return bookRepository.save(existingBook);
+        bookMapper.updateBook(bookDto, existingBook);
+        return bookMapper.toDto(bookRepository.save(existingBook));
     }
 
     public void deleteById(Long id) {
         bookRepository.deleteById(id);
     }
 
-    private Book mapDtoToBook(CreateBookRequestDto bookDto) {
-        Book book = new Book();
-        book.setTitle(bookDto.getTitle());
-        book.setAuthor(bookDto.getAuthor());
-        book.setIsbn(bookDto.getIsbn());
-        book.setPrice(bookDto.getPrice());
-        book.setDescription(bookDto.getDescription());
-        book.setCoverImage(bookDto.getCoverImage());
-        return book;
-    }
 }
